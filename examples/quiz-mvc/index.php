@@ -13,9 +13,11 @@ use App\Model\Question;
 
 
 
-dd(Answer::findById(5));
+//dd(Answer::findById(10));
 
+//dd(new ReflectionClass(Answer::class));
 
+dd(Answer::findAll());
 
 // Vérifie si l'utilisateur vient de répondre à une question
 $formSubmitted = $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['answer']) && isset($_POST['current-question']);

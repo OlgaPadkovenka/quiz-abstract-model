@@ -2,14 +2,19 @@
 
 namespace App\Model;
 
+use Cda0521Framework\Database\Sql\Table;
 use Cda0521Framework\Database\AbstractModel;
 use Cda0521Framework\Database\Sql\SqlDatabaseHandler;
 
 /**
  * Représente une question
  */
+
+#[Table('question')]
+
 class Question extends AbstractModel
 {
+
     /**
      * Identifiant en base de données
      * @var integer|null
@@ -49,30 +54,6 @@ class Question extends AbstractModel
         $this->text = $text;
         $this->rightAnswerId = $rightAnswerId;
         $this->rank = $rank;
-    }
-
-    /**
-     * Récupère tous les éléments en base de données
-     *
-     * @return Question[]
-     */
-    static public function findAll(): array
-    {
-        return parent::FindAllInTable('question', Question::class);
-    }
-
-    /**
-     * Récupère un élément en base de données en fonction des on identifiant
-     *
-     * @return Question|null
-     */
-    static public function findById(int $id): ?Question
-    {
-        $item = SqlDatabaseHandler::fetchById('question', $id);
-        if (is_null($item)) {
-            return $item;
-        }
-        return parent::FindByIdInTable($id, 'question', Question::class);
     }
 
     /**

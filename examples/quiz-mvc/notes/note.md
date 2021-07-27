@@ -233,4 +233,255 @@ Quand on demande de cherche un item en fonction de son id, il renvoie un tableau
 
 J'ai réduis mon appel findAll et findById à une seule ligne.
 
-26. 
+26. Je remarque que les méthodes findAll et FindById de la classe Réponse et de la classe Question sont ressembles. 
+
+27. Je crée une propriété statique de la classe qui va appartenir que à cette classe.
+class Question extends AbstractModel
+{
+static string $tableName = 'question';
+
+class Answer extends AbstractModel
+{
+    static string $tableName = 'answer';
+
+28. Je voudrais récupérer le nom de la classe sans le passer en paramètres de la méthode findAllInTable dans AbstractModel.php. Pour le faire, je dois récuperer le nom de la classe qui a appelé cette méthode.
+
+29. Je crée une variable $className qui 
+get_called_class() - Retourne le nom de la classe depuis laquelle une méthode statique a été appelée, tel que le Late State Binding le détermine.
+
+  static public function FindAllInTable(string $tableName, string $classname)
+    {
+        // Récupère le nom de la classe qui a appelé cette méthode
+        $className = get_called_class();
+
+30. J'ajoute className à mon fetch $data = SqlDatabaseHandler::fetchAll($tableName);
+ $data = SqlDatabaseHandler::fetchAll($className::$tableName);
+
+31. Je supprime les paramètres de la méthode findAll dans AbstractModel et je peux changer son nom de findAllInTable à findAll.
+
+    static public function findAll()
+    {
+        // Récupère le nom de la classe qui a appelé cette méthode
+        $className = get_called_class();
+        dd($className);
+
+32. Pour voir le résultat de get_called_class(), je peux faire 
+dd($className);
+et à l'index dd(Answer::findAll());
+
+Ca doit me renvoier "App\Model\Answer"
+
+Mais cela me produit une erreur parce que je dois supprimer les méthodes findAll() et findById() dans l'Answer, car l'Answer hérite findAll() de la class AbstractModel.
+
+Après avoir supprimé, je peux voir "App\Model\Answer". 
+
+P.S. A l'index j'ai fait dd(Answer::findAll());, Answer n'a pas de findAll, mais Answer est l'enfant de l'AbstractModel qui a findAll(), et Answer hérite cette méthode.
+
+Je supprime également les méthodes findAll et findById de la Question.
+
+33. J'adapte la méthode findById de l'AbstractModel.
+
+  static public function findById(int $id)
+    {
+        // Récupère le nom de la classe qui a appelé cette méthode
+        $className = get_called_class();
+
+        $item = SqlDatabaseHandler::fetchById($className::$tableName, $id);
+        if (is_null($item)) {
+            return null;
+            //Si item qu'on a récupéré est null, on renvoie null
+        }
+        return new $className(...$item);
+    }
+
+34. Pour l'instant $tableName est la propriété statique dans la Classe.
+Si tableName est la propriété de la Question, caveut dir que c'est une propriété qui est modifiable.
+On peut transformer en const.
+Un autre problème est que je peux écrire un model et il n'y a pas de const tableName.
+L'idée est d'écrire le coe de telle manière pour dire que j'ai besoin de la propriété   static string $tableName = 'question';
+
+35. L'intérieur de l'AbstractModel, je pourrais écrire une méthode qui sera protected, parce qu'elle servira que à AbstractModel que je pourrais appeler getTableName().
+Cette méthode getTableName() pourrait renvoyer la propriété $tableName de la classe appelante.
+
+ static protected function getTableName(): string
+    {
+        return static::$tableName;
+    }
+
+36. Si $tableName n'est pas défini, je retourne une erreur.
+
+  static protected function getTableName(): string
+    {
+        if(!isset(static::$tableName)){
+            throw new \Exception('Models must have a $tableName static proerty.')
+        } 
+        return static::$tableName;
+    }
+
+37. Maintenant, je peux changer cette ligne
+ // Récupère tous les enregistrements de la table concernée
+        $data = SqlDatabaseHandler::fetchAll($className::$tableName);
+
+à cela
+
+// Récupère tous les enregistrements de la table concernée
+        $data = SqlDatabaseHandler::fetchAll(static::getTableName());
+
+Et pareil pour 
+$item = SqlDatabaseHandler::fetchById($className::$tableName, $id);
+que je change à
+$item = SqlDatabaseHandler::fetchById(static::getTableName(), $id);
+
+38. Maintenant, si j'enlève la propriété tableName de la classe.
+ static string $tableName = 'question';
+ Cela me produit une erreur que j'ai écrit dans la méthode getTableName() de l'AbstractModel;
+
+//ATTRIBUTE
+39. Je voudrais changer static string $tableName = 'question'; par un attribut de la classe.
+Les attibuts offrent une possibilité de rajouter des méta-données strusturées et lisibles par la machine.
+J'ai la classe, mais en plus de son contenu, je peux ajouter des méta-données, des informations qui vont me permettre de savoir comment interpréter certaine parties des classes.
+Cela me permet de donner les propriétés spéciales à une classe.
+
+En écrivant ceci, je donne une attribut à la classe Answer.
+#[Table('answer')]
+
+Quand je donne cet atribut à une classe, ca permet de savoir quel est la table dans la basse de donées associé à cette classe.
+
+40. Dans le dossier Sql, je crée un fichier Table.php où je crée la classe Table qui aura la propriété name.
+Elle aura le consructeur avec name dans les paramètres, et qui va le stocker dans le propriété l'objet.
+J'ajoute un get pour pouvoir accéder à cette classe par la suite.
+
+<?php
+
+namespace Cda0521Framework\Database\Sql;
+
+class Table
+{
+    private string $name;
+
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
+
+
+    /**
+     * Get the value of name
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+}
+
+41. Mais comment on accède à l'attribut?
+La classe Answer a un attrubut, mais comment y accéder?
+Le principe de la Reflection est que ca permet d'écrire du code qui permet d'analyser le code.
+ReflectionObject rapporte l'info sur un object.
+ReflectionClass rapport l'info sur une classe.
+
+dd(new ReflectionClass(Answer::class));
+Cela me donne l'objet du type ReflectionClass qui contient l'info sur la classe consernée (y compris les méthodes, les propriétés et les attributs).
+
+42. Dans AbstractModel.php j'ai la méthode getTableName() qui me permet de chercher la valeur de la propriété statique tableName.
+
+Je change la méthode, et j'importe ReflectionClass:
+use ReflectionClass;
+
+    static protected function getTableName(): string
+    {
+        // if (!isset(static::$tableName)) {
+        //     throw new \Exception('Models must have a $tableName static proerty.');
+        // }
+        // return static::$tableName;
+
+        $reflection = new ReflectionClass(get_called_class());
+    }
+
+Si je suis arrivé à la méthode getTableName(), cela veut dire que cette méthode a été appelé par Question ou Answer.
+Donc, je crée un objet ReflectionClass qui va me renvoyer des informations sur la classe appelante.
+
+Pour voir les attrubuts de la classe applante, j'ajoute un dd à AbstractModel:
+  static protected function getTableName(): string
+    {
+        // Crée un objet permettant d'accéder aux propriétés de la classe appelante
+        $reflection = new ReflectionClass(get_called_class());
+
+        dd($reflection->getAttributes());
+    }
+
+    A l'index j'ajoute Answer::findAll();
+
+    Je vois le résultat suivant: 
+
+    ^ array:1 [▼
+  0 => ReflectionAttribute {#2 ▼
+    name: "App\Model\Table"
+    arguments: array:1 [▼
+      0 => "answer"
+    ]
+  }
+]
+
+43. Si je regarde ReflectionAttribute
+newInstant ca sert à instancier l'attribut représanté par la classe et l'argument de ReflectionAttribute.
+newInstant est censé d'envoyer l'attribut sous form d'objet.
+
+  static protected function getTableName(): string
+    {
+        // Crée un objet permettant d'accéder aux propriétés de la classe appelante
+        $reflection = new ReflectionClass(get_called_class());
+
+        // Pour chaque attribut associé à la classe
+        foreach ($reflection->getAttributes() as $reflectionAttribute) {
+            dump($reflectionAttribute->newInstance());
+        }
+        die();
+    }
+
+Chaque classe est représentee un attribut doit avoir un attrubut disant que c'est un attrubet #[Attribute]
+Je vérifie si la classe Table possè de #[Attribute]. Et je l'importe avec
+ use Attribute;
+
+ J'importe Table dans l'AbstractModel et dans Answer et Question.
+  use Cda0521Framework\Database\Sql\Table;
+
+Le dump m'envoie
+
+^ Cda0521Framework\Database\Sql\Table {#4 ▼
+  -name: "question"
+}
+
+a) le faite d'écrire l'attribut de la question #[Table('question')]
+
+b) Une fois j'ai récupéré la classe, je vais chercher dans les attrubuts 
+$reflection = new ReflectionClass(get_called_class());
+
+c) et cet attribut je l'instansie
+$reflectionAttribute->newInstance()
+Cela me fait la propriété table avec sa propriété question.
+Cela m'execute #[Table('question')] comme c'était new Question.
+
+44. Je fais la boucle et si j'arrive au bout de la boucle, cela veut dire qu'il n'y a pas d'attribut table, dans ce cas-là je mets une erreur.
+
+    static protected function getTableName(): string
+    {
+        // Crée un objet permettant d'accéder aux propriétés de la classe appelante
+        $reflection = new ReflectionClass(get_called_class());
+
+        // Pour chaque attribut associé à la classe
+        foreach ($reflection->getAttributes() as $reflectionAttribute) {
+
+            // Instancie l'attribut tel qu'il est écrit dans le code de la classe
+            $attribute = $reflectionAttribute->newInstance();
+
+            // S'il s'agit d'un attribut "table"
+            if ($attribute instanceof Table) {
+                // Renvoie le nom de l'attribut
+                return $attribute->getName();
+            }
+        }
+        // Si la boucle s'est terminée sans avoir trouvé d'attribut "table", envoie une erreur
+        throw new \Exception('Models must have a Table attribute.');
+    }
+
