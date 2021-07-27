@@ -2,12 +2,13 @@
 
 namespace App\Model;
 
+use Cda0521Framework\Database\AbstractModel;
 use Cda0521Framework\Database\Sql\SqlDatabaseHandler;
 
 /**
  * Représente une question
  */
-class Question
+class Question extends AbstractModel
 {
     /**
      * Identifiant en base de données
@@ -41,14 +42,13 @@ class Question
     public function __construct(
         ?int $id = null,
         string $text = '',
+        ?int $rightAnswerId = null,
         ?int $rank = null,
-        ?int $rightAnswerId = null
-    )
-    {
+    ) {
         $this->id = $id;
         $this->text = $text;
-        $this->rank = $rank;
         $this->rightAnswerId = $rightAnswerId;
+        $this->rank = $rank;
     }
 
     /**
@@ -58,16 +58,7 @@ class Question
      */
     static public function findAll(): array
     {
-        $data = SqlDatabaseHandler::fetchAll('question');
-        foreach ($data as $item) {
-            $result []= new Question(
-                $item['id'],
-                $item['text'],
-                $item['rank'],
-                $item['right_answer_id']
-            );
-        }
-        return $result;
+        return parent::FindAllInTable('question', Question::class);
     }
 
     /**
@@ -81,19 +72,14 @@ class Question
         if (is_null($item)) {
             return $item;
         }
-        return new Question(
-            $item['id'],
-            $item['text'],
-            $item['rank'],
-            $item['right_answer_id']
-        );
+        return parent::FindByIdInTable($id, 'question', Question::class);
     }
 
     /**
      * Get identifiant en base de données
      *
      * @return  integer|null
-     */ 
+     */
     public function getId()
     {
         return $this->id;
@@ -103,7 +89,7 @@ class Question
      * Get texte de la question
      *
      * @return  string
-     */ 
+     */
     public function getText()
     {
         return $this->text;
@@ -115,7 +101,7 @@ class Question
      * @param  string  $text  Texte de la question
      *
      * @return  self
-     */ 
+     */
     public function setText(string $text)
     {
         $this->text = $text;
@@ -127,7 +113,7 @@ class Question
      * Get rang de la question
      *
      * @return  integer|null
-     */ 
+     */
     public function getRank()
     {
         return $this->rank;
@@ -139,7 +125,7 @@ class Question
      * @param  integer|null  $rank  Rang de la question
      *
      * @return  self
-     */ 
+     */
     public function setRank($rank)
     {
         $this->rank = $rank;
@@ -151,7 +137,7 @@ class Question
      * Get la bonne réponse
      *
      * @return  Answer|null
-     */ 
+     */
     public function getRightAnswer()
     {
         return Answer::findById($this->rightAnswerId);
@@ -163,7 +149,7 @@ class Question
      * @param  Answer|null  $rightAnswer  la bonne réponse
      *
      * @return  self
-     */ 
+     */
     public function setRightAnswer($rightAnswer)
     {
         if (is_null($rightAnswer)) {

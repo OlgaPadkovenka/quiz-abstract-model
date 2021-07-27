@@ -59,7 +59,7 @@ class SqlDatabaseHandler
     static public function fetchAll(string $tableName): array
     {
         $statement = self::getInstance()->pdo->query('SELECT * FROM `' . $tableName . '`');
-        return $statement->fetchAll();
+        return $statement->fetchAll(PDO::FETCH_NUM);
     }
 
     /**
@@ -89,7 +89,7 @@ class SqlDatabaseHandler
     static public function fetchWhere(string $tableName, string $columnName, string $value): array
     {
         $statement = self::getInstance()->pdo->prepare('SELECT * FROM `' . $tableName . '` WHERE `' . $columnName . '` = :value');
-        $statement->execute([ ':value' => $value ]);
-        return $statement->fetchAll();
+        $statement->execute([':value' => $value]);
+        return $statement->fetchAll(PDO::FETCH_NUM);
     }
 }

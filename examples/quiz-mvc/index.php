@@ -6,7 +6,16 @@ ini_set('display_errors', 1);
 // Active le chargement automatique des classes dans le projet
 require_once __DIR__ . '/vendor/autoload.php';
 
+use Cda0521Framework\Database\AbstractModel;
+use App\Model\Answer;
 use App\Model\Question;
+
+
+
+
+dd(Answer::findById(5));
+
+
 
 // Vérifie si l'utilisateur vient de répondre à une question
 $formSubmitted = $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['answer']) && isset($_POST['current-question']);
