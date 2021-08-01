@@ -1,5 +1,5 @@
 1. Je crée le fichier AbstractModel.php dans src/Database
-2. Je voudrais créer deux méthodes ans la classe AbstractModel qui me permettront de chercher les question et les réponses. 
+2. Je voudrais créer deux méthodes dans la classe AbstractModel qui me permettront de chercher les question et les réponses. 
 
 namespace Cda0521Framework\Database;
 
@@ -23,7 +23,7 @@ class AbstractModel
     {
     }
 
-    static public function FindByIdInTable(int $id, string $tableName, string ////$classname)
+    static public function FindByIdInTable(int $id, string $tableName, string $classname)
     {
     }
 }

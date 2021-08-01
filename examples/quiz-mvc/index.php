@@ -11,8 +11,6 @@ use App\Model\Answer;
 use App\Model\Question;
 
 
-
-
 //dd(Answer::findById(10));
 
 //dd(new ReflectionClass(Answer::class));
